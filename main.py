@@ -5,14 +5,12 @@ import plotly.graph_objects as go
 
 from dash import Dash, html, dcc, Input, Output
 
-from crime_data import df, array_sscr
+from crime_data import df_race, arr_social
 
 app = Dash(__name__, external_stylesheets=[
            'https://codepen.io/chriddyp/pen/bWLwgP.css'])
 
 app.layout = html.Div(children=[
-
-
     html.Div([
         dcc.Graph(id='race_graphic'),
         html.Div(
@@ -49,18 +47,17 @@ app.layout = html.Div(children=[
     ]),
 
     html.Div(html.P([html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br(),
-                    html.Br()]
-                    )
+                     html.Br(),
+                     html.Br(),
+                     html.Br(),
+                     html.Br(),
+                     html.Br(),
+                     html.Br(),
+                     html.Br(),
+                     html.Br(),
+                     html.Br(),
+                     html.Br(),
+                     html.Br()])
              ),
 
     html.Div([
@@ -142,25 +139,25 @@ def update_race_graph(pct_black,
                       pct_white,
                       pct_asian,
                       pct_hisp):
+    df_race_filt = df_race
+    df_race_filt = df_race_filt[df_race_filt['racepctblack'] >= pct_black]
+    df_race_filt = df_race_filt[df_race_filt['racePctWhite'] >= pct_white]
+    df_race_filt = df_race_filt[df_race_filt['racePctAsian'] >= pct_asian]
+    df_race_filt = df_race_filt[df_race_filt['racePctHisp'] >= pct_hisp]
 
-    race_df = df
-    race_df = race_df[race_df['pct_black'] >= pct_black]
-    race_df = race_df[race_df['pct_white'] >= pct_white]
-    race_df = race_df[race_df['pct_asian'] >= pct_asian]
-    race_df = race_df[race_df['pct_hisp'] >= pct_hisp]
+    df_race_filt = df_race_filt[['murders',
+                                 'rapes',
+                                 'robberies',
+                                 'assaults',
+                                 'burglaries',
+                                 'larcenies',
+                                 'autoThefts',
+                                 'arsons']]
 
-    race_df = race_df[['murders',
-                       'rapes',
-                       'robberies',
-                       'assaults',
-                       'burglaries',
-                       'larcenies',
-                       'auto_thefts',
-                       'arsons']]
-    race_df = race_df.sum(axis=0)
-    fig = px.pie(race_df,
-                 values=race_df.array,
-                 names=race_df.index)
+    df_race_filt = df_race_filt.sum(axis=0)
+    fig = px.pie(df_race_filt,
+                 values=df_race_filt.array,
+                 names=df_race_filt.index)
 
     fig.update_layout(
         height=550,
@@ -190,8 +187,7 @@ def update_race_graph(murder_severity,
                       larceny_severity,
                       theft_severity,
                       arson_severity):
-
-    array_sscr_current = np.matmul(array_sscr, [murder_severity,
+    arr_social_current = np.matmul(arr_social, [murder_severity,
                                                 rape_severity,
                                                 robbery_severity,
                                                 assault_severity,
@@ -200,13 +196,14 @@ def update_race_graph(murder_severity,
                                                 theft_severity,
                                                 arson_severity])
 
-    sh_0, sh_1 = array_sscr_current.shape
-    x, y = np.linspace(0, 50, sh_0), np.linspace(0, 50, sh_1)
+    sh_0, sh_1 = arr_social_current.shape
+    x = np.linspace(0, 50, sh_1)
+    y = np.linspace(0, 100, sh_0)
 
     fig = go.Figure(go.Surface(
         x=x,
         y=y,
-        z=array_sscr_current
+        z=arr_social_current
     ))
 
     fig.update_layout(
@@ -216,13 +213,14 @@ def update_race_graph(murder_severity,
             'camera_eye': {'x': 0, 'y': -1, 'z': 0.5},
             'aspectratio': {'x': 1, 'y': 1, 'z': 0.2},
             'xaxis_title': 'affluence in %',
-            'yaxis_title': 'did not graduate from high school in %',
-            'zaxis_title': 'criminality weight',})
+            'yaxis_title': 'born same state in %',
+            'zaxis_title': 'criminality weight', })
 
     fig.update_layout(
         width=1400,
         height=750,
-        title_text='Distribution of "criminality weight" (the severity of each crime can be choosed) depending on education and affluence level in different communuties',
+        title_text='Distribution of "criminality weight" (the severity of each crime can be choosen) '
+                   'depending on local population percentage and affluence level',
         title_x=0.07)
 
     return fig
